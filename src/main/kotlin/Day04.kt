@@ -12,7 +12,7 @@ fun getCards(input: List<String>): List<Card> =
         )
     }
 
-fun Card.numWinners(): Int = entries.count { it in winning }
+val Card.numWinners get() = entries.count { it in winning }
 
 class Day04 {
     fun part1(input: List<String>): Int =
@@ -22,9 +22,7 @@ class Day04 {
         val cards = getCards(input)
         val counts = IntArray(cards.size) { 1 }
         for (i in input.indices) {
-            val card = cards[i]
-            val j = card.numWinners()
-            for (n in i + 1..<i + j + 1) {
+            for (n in i + 1..<i + cards[i].numWinners + 1) {
                 counts[n] += counts[i]
             }
         }
