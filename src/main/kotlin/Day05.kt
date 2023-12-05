@@ -36,19 +36,48 @@ class Day05 {
                 }
             }
 
-        return seeds.minOf { seed ->
+        val cache = mutableMapOf<Pair<Long, String>, Long>()
+
+
+        /*return seeds.minOf { seed ->*/
+        return seeds.let { (s1, e1, s2, e2) -> (s1..s1 + e1).toList() + (s2..s2 + e2).toList() }.map { seed ->
+            /*.minOf { seed ->*/
             with(alamanac) {
                 mapFor(seed, "seed-to-soil")
-                    .run { mapFor(this, "soil-to-fertilizer") }
-                    .run { mapFor(this, "fertilizer-to-water") }
-                    .run { mapFor(this, "water-to-light") }
-                    .run { mapFor(this, "light-to-temperature") }
-                    .run { mapFor(this, "temperature-to-humidity") }
-                    .run { mapFor(this, "humidity-to-location") }
+                    .run {
+                        cache.getOrPut(this to "soil-to-fertilizer") {
+                            mapFor(this, "soil-to-fertilizer")
+                        }
+                    }
+                    .run {
+                        cache.getOrPut(this to "fertilizer-to-water") {
+                            mapFor(this, "fertilizer-to-water")
+                        }
+                    }
+                    .run {
+                        cache.getOrPut(this to "water-to-light") {
+                            mapFor(this, "water-to-light")
+                        }
+                    }
+                    .run {
+                        cache.getOrPut(this to "light-to-temperature") {
+                            mapFor(this, "light-to-temperature")
+                        }
+                    }
+                    .run {
+                        cache.getOrPut(this to "temperature-to-humidity") {
+                            mapFor(this, "temperature-to-humidity")
+                        }
+                    }
+                    .run {
+                        cache.getOrPut(this to "humidity-to-location") {
+                            mapFor(this, "humidity-to-location")
+                        }
+                    }
             }
-        }
-    }
+        }.first()
 
+    }
     fun part2(input: List<String>): Int {
         return input.size
     }
