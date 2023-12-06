@@ -1,19 +1,30 @@
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.runBlocking
+import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.AtomicLong
+
 data class Mapping(val destination: Long, val source: Long, val length: Long)
 
 class Day05 {
-    fun part1(input: List<String>): Long {
-        val seeds = input.first().split(": ")[1].split(" ").map(String::toLong)
-        fun MutableMap<String, List<Mapping>>.addEntry(entry: List<String>) {
-            put(entry[0].removeSuffix(" map:"),
-                entry.slice(1..<entry.size)
-                    .map { it.split(" ").map(String::toLong) }
-                    .map { (dest, src, size) -> Mapping(dest, src, size) }
-            )
-        }
+    fun MutableMap<String, List<Mapping>>.addEntry(entry: List<String>) {
+        put(
+            entry[0].removeSuffix(" map:"),
+            entry.slice(1..<entry.size)
+                .map { it.split(" ").map(String::toLong) }
+                .map { (dest, src, size) -> Mapping(dest, src, size) }
+        )
+    }
 
-        val alamanac = buildMap {
+    fun List<String>.seeds(): List<Long> =
+        first().split(": ")[1].split(" ").map(String::toLong)
+
+    private var _almanac: Map<String, List<Mapping>>? = null
+    fun List<String>.buildAlmanac(): Map<String, List<Mapping>> =
+        _almanac ?: buildMap {
             val currentEntry = mutableListOf<String>()
-            input.drop(2).forEach {
+            drop(2).forEach {
                 if (it.isBlank()) {
                     if (currentEntry.isNotEmpty()) {
                         addEntry(currentEntry)
@@ -26,60 +37,60 @@ class Day05 {
                     addEntry(currentEntry)
                 }
             }
+        }.also { _almanac = it }
+
+    fun Map<String, List<Mapping>>.mapFor(seed: Long, key: Int): Long =
+        values.toList()[key].fold(seed) { acc, (d, s, l) ->
+            when (seed) {
+                in s..<(s + l) -> acc + d - s
+                else -> acc
+            }
         }
 
-        fun Map<String, List<Mapping>>.mapFor(seed: Long, key: String): Long =
-            this[key]!!.fold(seed) { acc, (d, s, l) ->
-                when (seed) {
-                    in s..<(s + l) -> acc + d - s
-                    else -> acc
-                }
+    fun Map<String, List<Mapping>>.minLoc(seeds: List<Long>) =
+        seeds.minOf { seed ->
+            var idx = 0
+            mapFor(seed, idx++)
+                .run { mapFor(this, idx++) }
+                .run { mapFor(this, idx++) }
+                .run { mapFor(this, idx++) }
+                .run { mapFor(this, idx++) }
+                .run { mapFor(this, idx++) }
+                .run { mapFor(this, idx++) }
+        }
+
+    fun part1(input: List<String>): Long =
+        input.buildAlmanac().minLoc(input.seeds())
+
+    fun part2(input: List<String>): Long {
+        // X: 58880743
+        //    2783212609
+        val atomicLong = AtomicLong(Long.MAX_VALUE)
+        val alamanac = input.buildAlmanac()
+        /*val minBlock =*/
+        val minBlock = runBlocking {
+            input.seeds().let { (s1, e1, s2, e2) ->
+                (
+                        (s1..<s1 + e1).asSequence() +
+                                (s2..<s2 + e2).asSequence()
+                        )
             }
+                .chunked(10).asIterable()
+                /*.minOf { alamanac.minLoc(it) }*/
+                .map {
+                    async(Dispatchers.Default) {
+                        alamanac.minLoc(it)
+                            /*.also {
+                                if (atomicLong.get() != it) {
+                                    println("newMin: $it")
+                                }
+                            }*/
+                    }
+                }.awaitAll().min()
+        }
 
-        val cache = mutableMapOf<Pair<Long, String>, Long>()
-
-
-        /*return seeds.minOf { seed ->*/
-        return seeds.let { (s1, e1, s2, e2) -> (s1..s1 + e1).toList() + (s2..s2 + e2).toList() }.map { seed ->
-            /*.minOf { seed ->*/
-            with(alamanac) {
-                mapFor(seed, "seed-to-soil")
-                    .run {
-                        cache.getOrPut(this to "soil-to-fertilizer") {
-                            mapFor(this, "soil-to-fertilizer")
-                        }
-                    }
-                    .run {
-                        cache.getOrPut(this to "fertilizer-to-water") {
-                            mapFor(this, "fertilizer-to-water")
-                        }
-                    }
-                    .run {
-                        cache.getOrPut(this to "water-to-light") {
-                            mapFor(this, "water-to-light")
-                        }
-                    }
-                    .run {
-                        cache.getOrPut(this to "light-to-temperature") {
-                            mapFor(this, "light-to-temperature")
-                        }
-                    }
-                    .run {
-                        cache.getOrPut(this to "temperature-to-humidity") {
-                            mapFor(this, "temperature-to-humidity")
-                        }
-                    }
-                    .run {
-                        cache.getOrPut(this to "humidity-to-location") {
-                            mapFor(this, "humidity-to-location")
-                        }
-                    }
-            }
-        }.first()
-
-    }
-    fun part2(input: List<String>): Int {
-        return input.size
+        println("minLoc: $minBlock")
+        return minBlock
     }
 }
 
@@ -87,6 +98,6 @@ fun main() {
     val input = readInput("Day05")
     with(Day05()) {
         part1(input).println()
-        /*part2(input).println()*/
+        part2(input).println()
     }
 }
