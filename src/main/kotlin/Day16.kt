@@ -12,12 +12,12 @@ class Day16 {
 
     data class Tile(val row: Int, val col: Int, val prevDir: Direction)
 
-    fun part1(input: List<String>): Int {
+    fun solve(input: List<String>, tile: Tile): Int {
         val visited = mutableSetOf<Tile>()
         val grid = input.map { it.toCharArray() }.toTypedArray()
 
         val stack = ArrayDeque<Tile>()
-        stack.push(Tile(0, 0, Right))
+        stack.push(tile)
 
         while (stack.isNotEmpty()) {
             val current = stack.pop()
@@ -58,8 +58,25 @@ class Day16 {
         return visited.distinctBy { it.row to it.col }.size
     }
 
+    fun part1(input: List<String>): Int = solve(input, Tile(0, 0, Right))
+
     fun part2(input: List<String>): Int {
-        return input.size
+        var max = 0
+        input.forEachIndexed { i, s ->
+            max = when {
+                i > 0 && i < input.size - 1 -> maxOf(
+                    max, solve(input, Tile(i, 0, Right)),
+                    maxOf(max, solve(input, Tile(i, s.length - 1, Left)))
+                )
+                i == 0 -> maxOf(max, solve(input, Tile(i, 0, Down)))
+                else -> maxOf(max, solve(input, Tile(i, input.size - 1, Up)))
+            }
+        }
+        (1..<input[0].length).forEach { i ->
+            max = maxOf(max, solve(input, Tile(0, i, Down)))
+            max = maxOf(max, solve(input, Tile(input.size - 1, i, Up)))
+        }
+        return max
     }
 }
 
@@ -67,6 +84,6 @@ fun main() {
     val input = readInput("Day16")
     with(Day16()) {
         part1(input).println()
-        /*part2(input).println()*/
+        part2(input).println()
     }
 }
