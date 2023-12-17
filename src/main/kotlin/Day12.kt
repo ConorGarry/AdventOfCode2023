@@ -39,6 +39,6 @@ fun main() {
     val input = readInput("Day12")
     with(Day12()) {
         part1(input).println()
-        /*part2(input).println()*/
+        part2(input).println()
     }
 }

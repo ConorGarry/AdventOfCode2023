@@ -1,13 +1,7 @@
 import Direction.*
 import Tile.*
 
-enum class Direction(val coords: Pair<Int, Int>) {
-    Up(-1 to 0),
-    Down(1 to 0),
-    Left(0 to -1),
-    Right(0 to 1),
-    None(0 to 0)
-}
+
 
 enum class Tile(val directions: Pair<Direction, Direction>) {
     Vertical(Up to Down),
@@ -124,7 +118,7 @@ class Day10 {
 fun main() {
     val input = readInput("Day10")
     with(Day10()) {
-        part1(input).println()
-        /*part2(input).println()*/
+        /*part1(input).println()*/
+        part2(input).println()
     }
 }

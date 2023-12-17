@@ -24,3 +24,11 @@ fun List<String>.printGrid() = this.forEach { it.forEach(::print); println() }
 fun Array<CharArray>.printGrid() = this.forEach {
     it.forEach(::print); println("")
 }
+
+enum class Direction(val coords: Pair<Int, Int>) {
+    Up(-1 to 0),
+    Down(1 to 0),
+    Left(0 to -1),
+    Right(0 to 1),
+    None(0 to 0)
+}
