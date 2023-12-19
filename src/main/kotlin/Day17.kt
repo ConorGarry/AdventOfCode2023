@@ -40,35 +40,29 @@ class Day17 {
         var directionCount: Int,
     )
 
-    fun part1(input: List<String>): Int {
-        parse(input).forEach {
-            it.forEach(::print)
-            println("")
-        }
-
+    private fun solve(input: List<String>, maxSteps: Int = 3, minSteps: Int = -1): Int {
         val grid = parse(input)
-        val visited = mutableSetOf<NavState>()
+        val visited = mutableSetOf<Triple<Pair<Int, Int>, Pair<Int, Int>, Int>>()
         val queue = PriorityQueue(compareBy<NavState> { it.total })
         queue.offer(NavState(0, 0 to 0, 0, 0, 0))
+        val start = 0 to 0
         val end = input.size - 1 to input[0].length - 1
 
         while (queue.isNotEmpty()) {
             val current = queue.poll()
             val (row, col) = current.currentCoords
-            if (row to col == end) return current.total
+            if (row to col == end && (minSteps < 0 || current.directionCount >= minSteps)) return current.total
 
             if (!visited.add(
-                    NavState(
-                        current.total,
+                    Triple(
                         current.currentCoords,
-                        current.dRow,
-                        current.dCol,
+                        (current.dRow to current.dCol),
                         current.directionCount
                     )
                 )
             ) continue
 
-            if (current.directionCount < 3 && row to col != 0 to 0) {
+            if (current.directionCount < maxSteps && row to col != start) {
                 val nr = row + current.dRow
                 val nc = col + current.dCol
                 if (nr in grid.indices && nc in grid[0].indices) {
@@ -85,26 +79,28 @@ class Day17 {
                 }
             }
 
-            listOf(Up, Down, Left, Right)
-                .forEach { dir ->
-                    val (dr, dc) = dir.coords
-                    if (dr to dc != current.dRow to current.dCol && dr to dc != (-current.dRow to -current.dCol)) {
-                        add(queue, current.total, grid, row, col, dr, dc)
+            if (minSteps < 0 || (current.directionCount >= minSteps || row to col == start)) {
+                listOf(Up, Down, Left, Right)
+                    .forEach { dir ->
+                        val (dr, dc) = dir.coords
+                        if (dr to dc != current.dRow to current.dCol && dr to dc != (-current.dRow to -current.dCol)) {
+                            add(queue, current.total, grid, row, col, dr, dc)
+                        }
                     }
-                }
+            }
         }
-        return 0
+        error("No path found")
     }
 
-    fun part2(input: List<String>): Int {
-        return input.size
-    }
+    fun part1(input: List<String>): Int = solve(input)
+
+    fun part2(input: List<String>): Int = solve(input, 10, 4)
 }
 
 fun main() {
     val input = readInput("Day17")
     with(Day17()) {
         part1(input).println()
-        /*part2(input).println()*/
+        part2(input).println()
     }
 }
