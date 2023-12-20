@@ -1,28 +1,26 @@
 import Direction.*
-import kotlin.math.max
 
 class Day18 {
 
     fun parse(input: List<String>): List<Triple<Direction, Int, String>> =
         input.map {
-            it.split(" ").let { (a, b, c) ->
+            it.split(" ").let { (direction, amount, color) ->
                 Triple(
-                    when (a) {
+                    when (direction) {
                         "U" -> Up
                         "D" -> Down
                         "L" -> Left
                         "R" -> Right
-                        else -> error("Unknown direction $a")
+                        else -> error("Unknown direction $direction")
                     },
-                    b.toInt(),
-                    c
+                    amount.toInt(),
+                    color
                 )
             }
         }
 
 
-    fun solve(input: List<String>): Int {
-        val digPlan = parse(input)
+    fun solve(digPlan: List<Triple<Direction, Int, String>>): Int {
         val (width, height) = digPlan.runningFold(1 to 1) { acc, (d, count, _) ->
             when (d) {
                 Right -> acc.first + count to acc.second
@@ -32,7 +30,7 @@ class Day18 {
                 else -> acc
             }
         }.maxBy { it.first * it.second }
-        val grid = Array(height * 3) { CharArray(width * 3) { '.' } }
+        val grid = Array(height) { CharArray(width) { '.' } }
         val pos = intArrayOf(grid.size / 2, grid[0].size / 2)
         var sum = 0
         digPlan.forEach { (dir, steps, color) ->
@@ -104,17 +102,37 @@ class Day18 {
         return sum + filled
     }
 
-    fun part1(input: List<String>): Int = solve(input)
+    fun part1(input: List<String>): Int = solve(parse(input))
 
     fun part2(input: List<String>): Int {
+        solve(
+            parse(input).map { (_, _, hex) ->
+                Triple(
+                    hex.substring(hex.length - 2).removeSuffix(")").let {
+                        when (it) {
+                            "0" -> Right
+                            "1" -> Down
+                            "2" -> Left
+                            "3" -> Up
+                            else -> error("Unknown hex $it")
+                        }
+
+                    },
+                    hex.substring(2, hex.length - 2).toInt(16),
+                    "###"
+                )
+            }
+        )
+
         return input.size
+
     }
 }
 
 fun main() {
-    val input = readInput("Day18")
+    val input = readInput("Day18_test")
     with(Day18()) {
-        part1(input).println()
-        /*part2(input).println()*/
+        /*part1(input).println()*/
+        part2(input).println()
     }
 }
